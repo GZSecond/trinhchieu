@@ -268,21 +268,11 @@
           <button data-ct="s" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Kim giây</button>
         </div>
       </div>
-      <div class="text-xs text-zinc-400 mb-1.5">Ngày tháng (bật / tắt từng phần)</div>
-      <div class="grid grid-cols-4 gap-1.5 mb-2">
-        <button data-ct="dw" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Thứ</button>
-        <button data-ct="dd" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Ngày</button>
-        <button data-ct="dm" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Tháng</button>
-        <button data-ct="dy" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Năm</button>
-      </div>
-      <div id="cWf" class="mb-3">
-        <div class="text-xs text-zinc-400 mb-1.5">Cách viết thứ</div>
-        <div class="grid grid-cols-2 gap-1.5">
-          <button data-cf="wf" data-val="vi" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Việt: Thứ Hai</button>
-          <button data-cf="wf" data-val="vis" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Việt tắt: T2</button>
-          <button data-cf="wf" data-val="en" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Anh: Monday</button>
-          <button data-cf="wf" data-val="ens" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Anh tắt: Mon</button>
-        </div>
+      <div class="text-xs text-zinc-400 mb-1.5">Ngày tháng</div>
+      <div class="grid grid-cols-3 gap-1.5 mb-3">
+        <button data-cf="date" data-val="none" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Ẩn</button>
+        <button data-cf="date" data-val="short" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Ngắn</button>
+        <button data-cf="date" data-val="full" class="py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Đầy đủ</button>
       </div>
       <div class="text-xs text-zinc-400 mb-1.5">Font dòng ngày tháng</div>
       <select id="clkDFont" class="w-full px-2 py-2 mb-3 bg-zinc-800 border border-zinc-700 rounded-lg text-xs focus:outline-none">
@@ -1296,7 +1286,7 @@ $('dimRange').addEventListener('input', e => { dimPct = +e.target.value; saveSet
 applyDisp();
 
 /* ---------- Đồng hồ (nút Clock riêng) ---------- */
-const CLK_DEF = { mode: 'off', h: true, m: true, s: false, fmt: '24', dw: false, dd: false, dm: false, dy: false, wf: 'vi', font: 'sys', dfont: 'same', scale: 100, color: '#ffffff', op: 95, bgBlur: 8, bgAlpha: 38, sw: 0, sc: '#000000', pos: 'tl', bg: false, nums: true };
+const CLK_DEF = { mode: 'off', h: true, m: true, s: false, fmt: '24', date: 'none', font: 'sys', dfont: 'same', scale: 100, color: '#ffffff', op: 95, bgBlur: 8, bgAlpha: 38, sw: 0, sc: '#000000', pos: 'tl', bg: false, nums: true };
 const CLK_FONTS = {
   sys: ['system-ui, -apple-system, "Segoe UI", sans-serif', 300],
   seg7: ['ui-monospace, "Courier New", monospace', 400],
@@ -1312,12 +1302,7 @@ function cleanClk(c) {
   if (['off', 'digital', 'analog'].includes(c.mode)) o.mode = c.mode;
   ['h', 'm', 's', 'bg', 'nums'].forEach(k => { if (typeof c[k] === 'boolean') o[k] = c[k]; });
   if (['24', '12'].includes(c.fmt)) o.fmt = c.fmt;
-  ['dw', 'dd', 'dm', 'dy'].forEach(k => { if (typeof c[k] === 'boolean') o[k] = c[k]; });
-  if (['vi', 'vis', 'en', 'ens'].includes(c.wf)) o.wf = c.wf;
-  if (['dw', 'dd', 'dm', 'dy'].every(k => c[k] === undefined) && typeof c.date === 'string') {   // thiết lập cũ: Ẩn / Ngắn / Đầy đủ
-    if (c.date === 'short') { o.dd = true; o.dm = true; }
-    else if (c.date === 'full') { o.dw = true; o.dd = true; o.dm = true; o.dy = true; }
-  }
+  if (['none', 'short', 'full'].includes(c.date)) o.date = c.date;
   if (CLK_FONTS[c.font]) o.font = c.font;
   if (c.dfont === 'same' || (CLK_FONTS[c.dfont] && !String(c.dfont).startsWith('seg7'))) o.dfont = c.dfont;
   if (c.scale >= 40 && c.scale <= 250) o.scale = +c.scale;
@@ -1387,20 +1372,11 @@ function seg7(str, bold) {   // chuỗi giờ -> SVG LED 7 đoạn (chỉ vẽ �
   }
   return `<svg viewBox="0 0 ${Math.max(x - 8, 1)} 90" fill="currentColor" aria-hidden="true">${out}</svg>`;
 }
-const WD = {
-  vi: ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'],
-  vis: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
-  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-  ens: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-};
-function clockDate(n) {   // ghép thứ + ngày/tháng/năm theo những phần đang bật
-  const dmy = [clk.dd && pad2(n.getDate()), clk.dm && pad2(n.getMonth() + 1), clk.dy && String(n.getFullYear())].filter(Boolean).join('/');
-  const wd = clk.dw ? WD[clk.wf][n.getDay()] : '';
-  return wd && dmy ? wd + ', ' + dmy : (wd || dmy);
-}
 function tickClock() {
   const n = new Date();
-  const ds = clockDate(n);
+  const ds = clk.date === 'none' ? '' : clk.date === 'short'
+    ? n.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+    : n.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' });
   $('clkD').textContent = ds; $('clkD').style.display = ds ? 'block' : 'none';
   if (clk.mode === 'digital') {
     let H = n.getHours(), suffix = '';
@@ -1444,7 +1420,6 @@ function applyClock() {
   $('clkFont').value = clk.font; $('clkDFont').value = clk.dfont;
   $('clkScale').value = clk.scale; $('clkScaleVal').textContent = clk.scale + '%';
   $('clkOp').value = clk.op; $('clkOpVal').textContent = clk.op + '%';
-  $('cWf').style.display = clk.dw ? 'block' : 'none';
   $('cBgRow').style.display = clk.bg ? 'block' : 'none';
   $('clkBgb').value = clk.bgBlur; $('clkBgbVal').textContent = clk.bgBlur + ' px';
   $('clkBga').value = clk.bgAlpha; $('clkBgaVal').textContent = clk.bgAlpha + '%';
