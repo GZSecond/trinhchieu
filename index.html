@@ -64,6 +64,8 @@
   #clock.pos-tr #clkA svg,#clock.pos-br #clkA svg{margin-right:0;margin-left:auto}
   #clock.pos-tl #clkA svg,#clock.pos-bl #clkA svg{margin-left:0}
   .thumb .dev{position:absolute;right:2px;bottom:2px;font-size:10px;line-height:14px;background:rgba(0,0,0,.75);padding:0 3px;border-radius:4px}
+  .thumb .ld{position:absolute;right:2px;bottom:2px;font-size:10px;line-height:14px;padding:0 4px;border-radius:4px;color:#fff;pointer-events:none}
+  .thumb .ld.ok{background:#047857}.thumb .ld.err{background:#b91c1c}.thumb .ld.ing{background:#52525b}
   .thumb .hid{position:absolute;left:2px;bottom:2px;font-size:10px;line-height:14px;background:rgba(0,0,0,.75);color:#fbbf24;padding:0 4px;border-radius:4px}
   #mpanel{display:none;width:100%;margin-bottom:8px;max-height:72vh;overflow-y:auto}
   #dock.open-music #mpanel{display:block}
@@ -156,6 +158,15 @@
     </div>
 
     <div id="usage" class="text-xs text-zinc-400 mb-2"></div>
+    <div class="mb-3">
+      <div class="flex items-center justify-between text-xs mb-1"><span class="text-zinc-300">Ảnh kho chung đã tải</span><span id="loadTxt" class="text-zinc-400">0/0</span></div>
+      <div class="h-1.5 mb-2 rounded-full bg-zinc-800 overflow-hidden"><div id="loadFill" class="h-full bg-emerald-500" style="width:0%"></div></div>
+      <div class="flex gap-2">
+        <button id="preBtn" class="flex-1 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Tải trước tất cả</button>
+        <button id="retryBtn" class="px-3 py-2 bg-amber-900/70 hover:bg-amber-800 text-amber-100 rounded-lg text-xs" style="display:none">Thử lại</button>
+      </div>
+      <p class="text-[11px] text-zinc-500 mt-1.5">Trên ảnh nhỏ: ✓ đã tải · … đang tải · ! lỗi · không dấu = chưa tải</p>
+    </div>
     <div class="flex gap-2 mb-3">
       <button id="cleanBtn" class="flex-1 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs">Làm mới kho chung</button>
       <button id="clearAllBtn" class="flex-1 px-3 py-2 bg-red-900/70 hover:bg-red-800 text-red-100 rounded-lg text-xs">Xóa ảnh trên máy này</button>
@@ -463,7 +474,7 @@ function parseManifest(m) {   // nhận { photos: [...] } hoặc mảng; mỗi p
     if (!p || typeof p.file !== 'string' || !p.file) continue;
     let file = p.file.replace(/^\.?\//, '');
     if (!/^(https?:)?\/\//i.test(file) && !file.includes('/')) file = 'photos/' + file;
-    out.push({ file, name: String(p.name || file.split('/').pop()), w: +p.w || 0, h: +p.h || 0, thumb: typeof p.thumb === 'string' ? p.thumb : '' });
+    out.push({ file, name: String(p.name || file.split('/').pop()), w: +p.w || 0, h: +p.h || 0, bytes: +p.bytes || 0, thumb: typeof p.thumb === 'string' ? p.thumb : '' });
   }
   return out;
 }
@@ -498,6 +509,79 @@ function reorderImages() {   // kho chung theo thứ tự trong photos.json, r�
   images.clear(); [...sh, ...lo].forEach(i => images.set(i.id, i));
 }
 
+/* ---------- Trạng thái tải ảnh chung: '' (chưa tải) | ing | ok | err ---------- */
+const thumbEls = new Map();   // id -> phần tử ảnh nhỏ trong lưới (để cập nhật huy hiệu mà không dựng lại cả lưới)
+let preloading = false, preAbort = false, ldT = 0;
+function loadBadge(im) {
+  if (im.src !== 'shared' || !im.load) return null;
+  const b = document.createElement('span'); b.className = 'ld ' + im.load;
+  b.textContent = { ok: '✓', err: '!', ing: '…' }[im.load];
+  b.title = { ok: 'Đã tải', err: 'Tải lỗi', ing: 'Đang tải' }[im.load];
+  return b;
+}
+function paintLoad(im) {
+  const d = thumbEls.get(im.id); if (!d) return;
+  const old = d.querySelector('.ld'); if (old) old.remove();
+  const b = loadBadge(im); if (b) d.append(b);
+}
+function updLoad() {
+  clearTimeout(ldT); ldT = setTimeout(() => {
+    const sh = [...images.values()].filter(i => i.src === 'shared'), n = sh.length;
+    const ok = sh.filter(i => i.load === 'ok').length, err = sh.filter(i => i.load === 'err').length;
+    $('loadTxt').textContent = `${ok}/${n}` + (err ? ` · ${err} lỗi` : '');
+    $('loadFill').style.width = (n ? ok / n * 100 : 0) + '%';
+    const left = sh.filter(i => i.load !== 'ok').reduce((a, i) => a + (i.row.bytes || 0), 0);
+    $('preBtn').textContent = preloading ? 'Đang tải… (bấm để dừng)'
+      : (n && ok === n ? 'Đã tải đủ ✓' : 'Tải trước tất cả' + (left ? (left < 1048576 ? ' (<1 MB)' : ` (≈${Math.round(left / 1048576)} MB)`) : ''));
+    $('retryBtn').style.display = err && !preloading ? '' : 'none';
+    $('retryBtn').textContent = `Thử lại ${err} ảnh lỗi`;
+  }, 80);
+}
+function markLoad(id, st) {
+  const im = images.get(id); if (!im || im.src !== 'shared' || im.load === st) return;
+  im.load = st; paintLoad(im); updLoad();
+}
+function loadOne(im) {   // tải trọn một ảnh (vào bộ nhớ đệm của trình duyệt) để chắc chắn ảnh mở được
+  return new Promise(res => {
+    markLoad(im.id, 'ing');
+    const t = new Image();
+    t.onload = () => { markLoad(im.id, 'ok'); res(); };
+    t.onerror = () => { markLoad(im.id, 'err'); res(); };
+    t.src = im.url;
+  });
+}
+async function preloadAll(onlyErr) {
+  if (preloading) { preAbort = true; return; }   // bấm lần nữa = dừng
+  const list = [...images.values()].filter(i => i.src === 'shared' && (onlyErr ? i.load === 'err' : i.load !== 'ok'));
+  if (!list.length) return toast(onlyErr ? 'Không có ảnh lỗi.' : 'Tất cả ảnh kho chung đã được tải.');
+  const mb = Math.round(list.reduce((a, i) => a + (i.row.bytes || 0), 0) / 1048576);
+  if (!onlyErr && mb >= 20 && !(await askConfirm(`Tải trước ${list.length} ảnh (khoảng ${mb} MB)? Nên dùng Wi-Fi để khỏi tốn dữ liệu di động.`))) return;
+  preloading = true; preAbort = false; updLoad();
+  let k = 0;
+  const worker = async () => { while (k < list.length && !preAbort) { const im = list[k++]; if (images.has(im.id)) await loadOne(im); } };
+  await Promise.all([worker(), worker(), worker()]);
+  list.forEach(i => { if (i.load === 'ing') markLoad(i.id, ''); });   // ảnh bị dừng giữa chừng
+  const stopped = preAbort; preloading = false; preAbort = false; updLoad();
+  const bad = list.filter(i => i.load === 'err').length;
+  toast(stopped ? 'Đã dừng tải trước' : bad ? `Xong, còn ${bad} ảnh lỗi` : 'Đã tải đủ ảnh kho chung ✓');
+}
+async function probeCache() {   // ảnh đã có sẵn trong bộ nhớ đệm từ lần trước thì đánh dấu đã tải (không tốn mạng)
+  const list = [...images.values()].filter(i => i.src === 'shared' && !i.load);
+  let k = 0;
+  const worker = async () => {
+    while (k < list.length) {
+      const im = list[k++];
+      try {
+        const r = await fetch(im.url, { cache: 'only-if-cached', mode: 'same-origin' });
+        if (r && r.ok && r.status === 200 && !im.load) { im.load = 'ok'; paintLoad(im); }
+        try { if (r.body) r.body.cancel(); } catch {}
+      } catch (e) {}
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  updLoad();
+}
+
 let syncing = false, lastSync = 0;
 async function backfill(ids) {   // ảnh chung thiếu kích thước/ảnh nhỏ trong photos.json: đo ngầm (chỉ giữ trong bộ nhớ)
   let i = 0;
@@ -530,13 +614,13 @@ async function syncRows(manual, init) {   // đọc photos.json: thêm ảnh m�
       } else if (cur.ord !== idx) { cur.ord = idx; changed = true; }
     });
     for (const [id, im] of [...images]) if (im.src === 'shared' && !seen.has(id)) { removeImage(id); changed = true; }
-    if (changed) reorderImages();
+    if (changed) { reorderImages(); updLoad(); }
     if (timer && added.length && playOrder === 'rand') playlist = [...added.filter(i => !i.hidden), ...playlist];   // ảnh mới lên màn hình ngay lượt kế
     if (changed) { renderGridSoon(); if (!init) ensureSlideshow(); }
     lastSync = Date.now();
     setStatus('Đã đồng bộ ✓', '#34d399'); refreshUsage();
     if (manual) toast(changed ? 'Đã cập nhật kho chung' : 'Kho chung đã là bản mới nhất');
-    backfill(fill);
+    backfill(fill); updLoad(); if (added.length) probeCache();
   } catch (e) {
     console.warn(e); setStatus('Không tải được kho chung', '#fbbf24');
     if (manual) toast('Không tải được photos.json, hãy kiểm tra kết nối mạng.');
@@ -554,7 +638,7 @@ async function connect() {
   $('status').style.cursor = 'pointer'; $('status').title = 'Chạm để đồng bộ ngay';
   $('status').onclick = () => syncRows(true);
   await Promise.all([loadLocal(), syncRows(false, true)]);
-  ensureSlideshow(); refreshUsage();
+  ensureSlideshow(); refreshUsage(); updLoad(); probeCache();
   setInterval(() => { if (document.visibilityState === 'visible') syncRows(); }, 60000);   // tự nhận ảnh mới mỗi phút
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && Date.now() - lastSync > 15000) syncRows();
@@ -679,7 +763,7 @@ const sel = new Set();
 function renderGridSoon() { clearTimeout(gridT); gridT = setTimeout(renderGrid, 150); }
 function renderGrid() {
   $('count').textContent = images.size;
-  const g = $('grid'); g.textContent = '';
+  const g = $('grid'); g.textContent = ''; thumbEls.clear();
   for (const im of images.values()) {
     const d = document.createElement('div');
     d.className = 'thumb' + (im.hidden ? ' off' : '') + (sel.has(im.id) ? ' sel' : '');
@@ -695,6 +779,8 @@ function renderGrid() {
     if (im.src === 'local') { const b = document.createElement('span'); b.className = 'dev'; b.textContent = '📱'; b.title = 'Ảnh upload riêng trên máy này'; d.append(b); }
     if (sel.has(im.id)) { const c = document.createElement('span'); c.className = 'chk'; c.textContent = '✓'; d.append(c); }
     else if (holdMode && im.id === lastId) { const l = document.createElement('span'); l.className = 'lk'; l.textContent = '🔒'; d.append(l); }
+    { const lb = loadBadge(im); if (lb) d.append(lb); }
+    thumbEls.set(im.id, d);
     let pressT = null, pressed = false;
     d.addEventListener('pointerdown', () => {
       pressed = false; clearTimeout(pressT); if (selMode) return;
@@ -760,13 +846,13 @@ function showNone() {
   fxToken++; fxRunning.forEach(a => a.cancel()); fxRunning = [];
   layerCur.style.display = 'none'; layerAlt.style.display = 'none';
 }
-function swap(url, thumb) {
+function swap(url, thumb, id) {
   const token = ++fxToken, nw = layerAlt, old = layerCur;
   fxRunning.forEach(a => a.cancel()); fxRunning = [];
   nw.style.display = 'none';
   const fg = nw.querySelector('.fg'), bg = nw.querySelector('.bg');
   fg.src = url; if (thumb) bg.src = thumb; else bg.removeAttribute('src');
-  (fg.decode ? fg.decode() : Promise.resolve()).catch(() => {}).then(() => {
+  (fg.decode ? fg.decode() : Promise.resolve()).then(() => { if (id) markLoad(id, 'ok'); }, () => { if (id) markLoad(id, 'err'); }).then(() => {
     if (token !== fxToken) return;
     const hadOld = old.style.display === 'block';
     old.style.zIndex = 1; nw.style.zIndex = 2; nw.style.display = 'block';
@@ -801,7 +887,7 @@ function shuffle() {
 function showId(id, fromPrev) {
   const d = images.get(id); if (!d) return;
   if (!fromPrev && lastId != null && lastId !== id) { hist.push(lastId); if (hist.length > 60) hist.shift(); }
-  lastId = id; swap(d.url, d.thumb); $('empty').style.display = 'none';
+  lastId = id; swap(d.url, d.thumb, id); $('empty').style.display = 'none';
   if (playOrder === 'seq') {   // phát tiếp các ảnh đứng sau ảnh này
     const order = [...images.keys()], pos = order.indexOf(id);
     playlist = buildList().filter(i => order.indexOf(i.id) > pos);
@@ -923,6 +1009,8 @@ const drop = $('drop');
 drop.addEventListener('drop', e => uploadFiles(e.dataTransfer.files));
 
 $('cleanBtn').addEventListener('click', () => syncRows(true));
+$('preBtn').addEventListener('click', () => preloadAll(false));
+$('retryBtn').addEventListener('click', () => preloadAll(true));
 $('clearAllBtn').addEventListener('click', clearLocal);
 
 /* ---------- Ẩn/hiện nút khi chạm ảnh ---------- */
