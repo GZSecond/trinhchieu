@@ -1,7 +1,7 @@
 {
  "version": 1,
- "generated": "2026-11-10T09:20:31Z",
- "count": 15,
+ "generated": "2026-11-10T09:21:52Z",
+ "count": 26,
  "photos": [
   {
    "file": "photos/anh1.gif",
@@ -122,6 +122,94 @@
    "h": 400,
    "bytes": 1202749,
    "thumb": "thumbs/anh15.jpg"
+  },
+  {
+   "file": "photos/anh16.gif",
+   "name": "anh16.gif",
+   "w": 1000,
+   "h": 1250,
+   "bytes": 822737,
+   "thumb": "thumbs/anh16.jpg"
+  },
+  {
+   "file": "photos/anh17.gif",
+   "name": "anh17.gif",
+   "w": 1920,
+   "h": 1080,
+   "bytes": 499896,
+   "thumb": "thumbs/anh17.jpg"
+  },
+  {
+   "file": "photos/anh18.gif",
+   "name": "anh18.gif",
+   "w": 1920,
+   "h": 1080,
+   "bytes": 6984783,
+   "thumb": "thumbs/anh18.jpg"
+  },
+  {
+   "file": "photos/anh19.gif",
+   "name": "anh19.gif",
+   "w": 1260,
+   "h": 2000,
+   "bytes": 138736,
+   "thumb": "thumbs/anh19.jpg"
+  },
+  {
+   "file": "photos/anh20.gif",
+   "name": "anh20.gif",
+   "w": 300,
+   "h": 572,
+   "bytes": 778898,
+   "thumb": "thumbs/anh20.jpg"
+  },
+  {
+   "file": "photos/anh21.gif",
+   "name": "anh21.gif",
+   "w": 520,
+   "h": 320,
+   "bytes": 60300,
+   "thumb": "thumbs/anh21.jpg"
+  },
+  {
+   "file": "photos/anh22.gif",
+   "name": "anh22.gif",
+   "w": 2048,
+   "h": 1080,
+   "bytes": 5233314,
+   "thumb": "thumbs/anh22.jpg"
+  },
+  {
+   "file": "photos/anh23.gif",
+   "name": "anh23.gif",
+   "w": 450,
+   "h": 510,
+   "bytes": 46645,
+   "thumb": "thumbs/anh23.jpg"
+  },
+  {
+   "file": "photos/anh24.gif",
+   "name": "anh24.gif",
+   "w": 480,
+   "h": 438,
+   "bytes": 5803809,
+   "thumb": "thumbs/anh24.jpg"
+  },
+  {
+   "file": "photos/anh25.gif",
+   "name": "anh25.gif",
+   "w": 512,
+   "h": 288,
+   "bytes": 824805,
+   "thumb": "thumbs/anh25.jpg"
+  },
+  {
+   "file": "photos/anh26.gif",
+   "name": "anh26.gif",
+   "w": 700,
+   "h": 434,
+   "bytes": 246352,
+   "thumb": "thumbs/anh26.jpg"
   }
  ]
 }
