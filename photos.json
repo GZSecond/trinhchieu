@@ -1,7 +1,7 @@
 {
  "version": 1,
- "generated": "2026-11-10T09:23:14Z",
- "count": 35,
+ "generated": "2026-11-10T09:25:25Z",
+ "count": 50,
  "photos": [
   {
    "file": "photos/anh1.gif",
@@ -282,6 +282,126 @@
    "h": 788,
    "bytes": 804110,
    "thumb": "thumbs/anh35.jpg"
+  },
+  {
+   "file": "photos/anh36.gif",
+   "name": "anh36.gif",
+   "w": 540,
+   "h": 304,
+   "bytes": 529075,
+   "thumb": "thumbs/anh36.jpg"
+  },
+  {
+   "file": "photos/anh37.gif",
+   "name": "anh37.gif",
+   "w": 2048,
+   "h": 1080,
+   "bytes": 5233314,
+   "thumb": "thumbs/anh37.jpg"
+  },
+  {
+   "file": "photos/anh38.gif",
+   "name": "anh38.gif",
+   "w": 960,
+   "h": 540,
+   "bytes": 3138351,
+   "thumb": "thumbs/anh38.jpg"
+  },
+  {
+   "file": "photos/anh39.gif",
+   "name": "anh39.gif",
+   "w": 540,
+   "h": 304,
+   "bytes": 137984,
+   "thumb": "thumbs/anh39.jpg"
+  },
+  {
+   "file": "photos/anh40.gif",
+   "name": "anh40.gif",
+   "w": 1424,
+   "h": 843,
+   "bytes": 1601915,
+   "thumb": "thumbs/anh40.jpg"
+  },
+  {
+   "file": "photos/anh41.gif",
+   "name": "anh41.gif",
+   "w": 1440,
+   "h": 720,
+   "bytes": 2978579,
+   "thumb": "thumbs/anh41.jpg"
+  },
+  {
+   "file": "photos/anh42.gif",
+   "name": "anh42.gif",
+   "w": 1000,
+   "h": 479,
+   "bytes": 4379012,
+   "thumb": "thumbs/anh42.jpg"
+  },
+  {
+   "file": "photos/anh43.gif",
+   "name": "anh43.gif",
+   "w": 1000,
+   "h": 478,
+   "bytes": 589181,
+   "thumb": "thumbs/anh43.jpg"
+  },
+  {
+   "file": "photos/anh44.gif",
+   "name": "anh44.gif",
+   "w": 640,
+   "h": 400,
+   "bytes": 414572,
+   "thumb": "thumbs/anh44.jpg"
+  },
+  {
+   "file": "photos/anh45.gif",
+   "name": "anh45.gif",
+   "w": 700,
+   "h": 452,
+   "bytes": 357376,
+   "thumb": "thumbs/anh45.jpg"
+  },
+  {
+   "file": "photos/anh46.gif",
+   "name": "anh46.gif",
+   "w": 1392,
+   "h": 783,
+   "bytes": 5724601,
+   "thumb": "thumbs/anh46.jpg"
+  },
+  {
+   "file": "photos/anh47.gif",
+   "name": "anh47.gif",
+   "w": 1440,
+   "h": 800,
+   "bytes": 664711,
+   "thumb": "thumbs/anh47.jpg"
+  },
+  {
+   "file": "photos/anh48.gif",
+   "name": "anh48.gif",
+   "w": 1920,
+   "h": 1080,
+   "bytes": 653436,
+   "thumb": "thumbs/anh48.jpg"
+  },
+  {
+   "file": "photos/anh49.gif",
+   "name": "anh49.gif",
+   "w": 1200,
+   "h": 843,
+   "bytes": 1376004,
+   "thumb": "thumbs/anh49.jpg"
+  },
+  {
+   "file": "photos/anh50.gif",
+   "name": "anh50.gif",
+   "w": 400,
+   "h": 600,
+   "bytes": 71569,
+   "thumb": "thumbs/anh50.jpg"
   }
  ]
 }
